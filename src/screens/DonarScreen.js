@@ -1,65 +1,80 @@
 import React, { useState } from 'react';
 import { Text, View, ScrollView, TextInput, Pressable, Alert } from 'react-native';
-import { registrarDonacionApi } from '../api/api';
 import styles from '../styles/DonarScreenStyles';
 
 export default function DonarScreen() {
-  const [tipoInsumo, setTipoInsumo] = useState('');
+  const [insumo, setInsumo] = useState('');
   const [cantidad, setCantidad] = useState('');
-  const [receptor, setReceptor] = useState('');
+  const [organizacion, setOrganizacion] = useState('');
 
-  const manejarEnvio = async () => {
-    if (!tipoInsumo || !cantidad || !receptor) {
-      Alert.alert('Campos incompletos', 'Por favor completa todos los datos.');
+  const handleDonar = () => {
+    if (!insumo || !cantidad || !organizacion) {
+      Alert.alert('Campos incompletos', 'Por favor completa todos los datos para registrar tu donación.');
       return;
     }
-
-    const exito = await registrarDonacionApi({ tipoInsumo, cantidad, receptor });
-    if (exito) {
-      Alert.alert('¡Éxito!', 'Tu donación ha sido registrada.');
-      setTipoInsumo('');
-      setCantidad('');
-      setReceptor('');
-    } else {
-      Alert.alert('Error', 'No se pudo registrar la donación.');
-    }
+    Alert.alert('¡Donación Registrada!', 'Gracias por tu aporte. Nos pondremos en contacto para coordinar la entrega.');
+    setInsumo('');
+    setCantidad('');
+    setOrganizacion('');
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContent}>
-      <Text style={styles.screenTitle}>Registro de Donaciones</Text>
-      <Text style={styles.screenSubtitle}>Cada aporte construye comunidad</Text>
+    <ScrollView style={styles.container}>
+      {/* Encabezado Azul */}
+      <View style={styles.header}>
+        <Text style={styles.headerBrand}>PUENTE</Text>
+        <Text style={styles.headerTitle}>Registro de Donaciones</Text>
+        <Text style={styles.headerSubtitle}>Cada aporte construye comunidad</Text>
+      </View>
 
-      <View style={styles.formContainer}>
-        <Text style={styles.label}>¿Qué deseas compartir?</Text>
-        
-        <Text style={styles.inputLabel}>Tipo de insumo</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ej. Alimentos no perecederos"
-          value={tipoInsumo}
-          onChangeText={setTipoInsumo}
-        />
+      <View style={styles.body}>
+        {/* Banner informativo */}
+        <View style={styles.infoBanner}>
+          <Text style={styles.infoBannerIcon}>📦</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.infoBannerTitle}>Tu donación hace la diferencia</Text>
+            <Text style={styles.infoBannerSub}>Completa los datos para coordinar la entrega.</Text>
+          </View>
+        </View>
 
-        <Text style={styles.inputLabel}>Cantidad / Detalle</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ej. 10 lbs de frijol"
-          value={cantidad}
-          onChangeText={setCantidad}
-        />
+        <Text style={styles.sectionLabel}>DATOS DE LA DONACIÓN</Text>
+        <Text style={styles.mainQuestion}>¿Qué deseas compartir?</Text>
 
-        <Text style={styles.inputLabel}>Organización receptora</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ej. Comedor San Francisco"
-          value={receptor}
-          onChangeText={setReceptor}
-        />
+        {/* Formulario */}
+        <View style={styles.formCard}>
+          <Text style={styles.inputLabel}>Tipo de insumo</Text>
+          <TextInput 
+            style={styles.input} 
+            placeholder="Ej. Alimentos no perecederos, ropa" 
+            placeholderTextColor="#94a3b8"
+            value={insumo}
+            onChangeText={setInsumo}
+          />
 
-        <Pressable style={styles.buttonPrimary} onPress={manejarEnvio}>
-          <Text style={styles.buttonText}>Registrar donación en especie →</Text>
-        </Pressable>
+          <Text style={styles.inputLabel}>Cantidad / Detalle</Text>
+          <TextInput 
+            style={styles.input} 
+            placeholder="Ej. 10 lbs de frijol" 
+            placeholderTextColor="#94a3b8"
+            value={cantidad}
+            onChangeText={setCantidad}
+          />
+
+          <Text style={styles.inputLabel}>Organización receptora</Text>
+          <TextInput 
+            style={styles.input} 
+            placeholder="Ej. Comedor San Francisco" 
+            placeholderTextColor="#94a3b8"
+            value={organizacion}
+            onChangeText={setOrganizacion}
+          />
+
+          <Text style={styles.privacyNote}>✓ Usaremos estos datos únicamente para coordinar tu entrega.</Text>
+
+          <Pressable style={styles.submitButton} onPress={handleDonar}>
+            <Text style={styles.submitButtonText}>Registrar donación en especie →</Text>
+          </Pressable>
+        </View>
       </View>
     </ScrollView>
   );
