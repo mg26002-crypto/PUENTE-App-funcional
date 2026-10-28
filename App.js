@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Pressable, Text, SafeAreaView, Platform } from 'react-native';
+import { View, Pressable, Text, SafeAreaView } from 'react-native';
 
 import { obtenerCentrosApi } from './src/api/api';
+import styles from './src/styles/AppStyles';
 import InicioScreen from './src/screens/InicioScreen';
 import RecursosScreen from './src/screens/RecursosScreen';
 import VoluntariadoScreen from './src/screens/VoluntariadoScreen';
@@ -54,17 +55,3 @@ export default function App() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#f8fafc',
-    // Ajuste para evitar pantallas en blanco en navegadores web
-    height: Platform.OS === 'web' ? '100vh' : '100%' 
-  },
-  content: { flex: 1 },
-  navBar: { flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingVertical: 10 },
-  navItem: { flex: 1, alignItems: 'center' },
-  navText: { fontSize: 12, color: '#64748b' },
-  navActive: { color: '#2563eb', fontWeight: 'bold' }
-});
