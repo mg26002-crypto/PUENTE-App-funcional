@@ -1,60 +1,75 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Text, View, ScrollView, Pressable, Alert } from 'react-native';
 import styles from '../styles/VoluntariadoScreenStyles';
 
-export default function VoluntariadoScreen() {
-  // Estado para manejar las convocatorias y hacerlas funcionales
-  const [jornadas, setJornadas] = useState([
-    {
-      id: 1,
-      dia: '20',
-      mes: 'OCT',
-      organizacion: 'Asociación Solidaria',
-      titulo: 'Jornada de Entregas de Alimentos',
-      fechaTexto: '20 Octubre · 8:00 AM',
-      ubicacion: 'Parque Central',
-      vacantes: 5,
-      postulado: false,
-    },
-    {
-      id: 2,
-      dia: '25',
-      mes: 'OCT',
-      organizacion: 'Banco de Alimentos de Occidente',
-      titulo: 'Clasificación de Donaciones',
-      fechaTexto: '25 de octubre · 9:30 a. m.',
-      ubicacion: 'Centro de Acopio Manos Unidas',
-      vacantes: 8,
-      postulado: false,
-    }
-  ]);
+const JORNADAS_INICIALES = [
+  {
+    id: 'entregas-alimentos',
+    dia: '20',
+    mes: 'OCT',
+    organizacion: 'Asociación Solidaria',
+    titulo: 'Jornada de Entregas de Alimentos',
+    fechaTexto: '20 Octubre · 8:00 AM',
+    ubicacion: 'Parque Central',
+    vacantes: 5,
+    postulado: false,
+  },
+  {
+    id: 'clasificacion-donaciones',
+    dia: '25',
+    mes: 'OCT',
+    organizacion: 'Banco de Alimentos de Occidente',
+    titulo: 'Clasificación de Donaciones',
+    fechaTexto: '25 de octubre · 9:30 a. m.',
+    ubicacion: 'Centro de Acopio Manos Unidas',
+    vacantes: 8,
+    postulado: false,
+  },
+];
 
-  const handlePostular = (id) => {
-    setJornadas(prevJornadas =>
-      prevJornadas.map(jornada => {
-        if (jornada.id === id) {
-          if (jornada.postulado) {
-            Alert.alert('Aviso', 'Ya estás postulado a esta jornada.');
-            return jornada;
-          }
-          Alert.alert(
-            '¡Postulación Exitosa!', 
-            `Te has inscrito correctamente a "${jornada.titulo}". ¡Gracias por tu ayuda!`
-          );
-          return {
-            ...jornada,
-            vacantes: jornada.vacantes - 1,
-            postulado: true
-          };
-        }
-        return jornada;
-      })
-    );
+export default function VoluntariadoScreen({ usuario, registrarActividad }) {
+  const [jornadas, setJornadas] = useState(JORNADAS_INICIALES);
+  const [jornadaEnviando, setJornadaEnviando] = useState(null);
+
+  const handlePostular = async (jornada) => {
+    if (jornada.postulado || jornadaEnviando) return;
+
+    setJornadaEnviando(jornada.id);
+    try {
+      const resultado = await registrarActividad({
+        tipo: 'postulacion',
+        titulo: jornada.titulo,
+        detalle: `${jornada.fechaTexto} · ${jornada.ubicacion}`,
+        usuario: usuario.nombre,
+      });
+
+      if (resultado?.guardadoLocal || resultado?.sincronizada) {
+        setJornadas((actuales) => actuales.map((item) => (
+          item.id === jornada.id
+            ? { ...item, postulado: true, vacantes: Math.max(0, item.vacantes - 1) }
+            : item
+        )));
+        Alert.alert(
+          resultado.sincronizada ? '¡Postulación exitosa!' : 'Postulación guardada',
+          resultado.sincronizada
+            ? `Te has inscrito a "${jornada.titulo}". ¡Gracias por tu ayuda!`
+            : 'Quedó guardada en este dispositivo y se enviará cuando vuelva la conexión.',
+        );
+      } else {
+        Alert.alert('No se pudo guardar', 'Inténtalo de nuevo cuando el historial esté disponible.');
+      }
+    } catch (error) {
+      console.error('Error al registrar la postulación:', error);
+      Alert.alert('No se pudo guardar', 'Ocurrió un error al guardar la postulación. Inténtalo de nuevo.');
+    } finally {
+      setJornadaEnviando(null);
+    }
   };
+
+  const vacantesTotales = jornadas.reduce((total, jornada) => total + jornada.vacantes, 0);
 
   return (
     <ScrollView style={styles.container}>
-      {/* Encabezado Azul */}
       <View style={styles.header}>
         <Text style={styles.headerBrand}>PUENTE</Text>
         <Text style={styles.headerTitle}>Convocatorias Activas</Text>
@@ -62,13 +77,10 @@ export default function VoluntariadoScreen() {
       </View>
 
       <View style={styles.body}>
-        {/* Banner de vacantes total */}
         <View style={styles.vacanciesBanner}>
           <Text style={styles.badgeIcon}>👥</Text>
           <View>
-            <Text style={styles.bannerTitle}>
-              {jornadas.reduce((acc, item) => acc + item.vacantes, 0)} vacantes disponibles
-            </Text>
+            <Text style={styles.bannerTitle}>{vacantesTotales} vacantes disponibles</Text>
             <Text style={styles.bannerSub}>Encuentra una causa que te inspire.</Text>
           </View>
         </View>
@@ -78,32 +90,35 @@ export default function VoluntariadoScreen() {
           <Text style={styles.opportunitiesText}>{jornadas.length} oportunidades</Text>
         </View>
 
-        {/* Listado dinámico de jornadas */}
-        {jornadas.map((item) => (
-          <View key={item.id} style={styles.eventCard}>
+        {jornadas.map((jornada) => (
+          <View key={jornada.id} style={styles.eventCard}>
             <View style={styles.eventMainRow}>
               <View style={styles.dateBox}>
-                <Text style={styles.dateNumber}>{item.dia}</Text>
-                <Text style={styles.dateMonth}>{item.mes}</Text>
+                <Text style={styles.dateNumber}>{jornada.dia}</Text>
+                <Text style={styles.dateMonth}>{jornada.mes}</Text>
               </View>
               <View style={styles.eventInfo}>
-                <Text style={styles.orgName}>{item.organizacion}</Text>
-                <Text style={styles.eventTitle}>{item.titulo}</Text>
+                <Text style={styles.orgName}>{jornada.organizacion}</Text>
+                <Text style={styles.eventTitle}>{jornada.titulo}</Text>
               </View>
             </View>
-
             <View style={styles.eventDetailsList}>
-              <Text style={styles.eventDetailText}>📅 {item.fechaTexto}</Text>
-              <Text style={styles.eventDetailText}>📍 {item.ubicacion}</Text>
-              <Text style={styles.eventDetailText}>👥 {item.vacantes} vacantes disponibles</Text>
+              <Text style={styles.eventDetailText}>📅 {jornada.fechaTexto}</Text>
+              <Text style={styles.eventDetailText}>📍 {jornada.ubicacion}</Text>
+              <Text style={styles.eventDetailText}>👥 {jornada.vacantes} vacantes disponibles</Text>
             </View>
-
-            <Pressable 
-              style={[styles.applyButton, item.postulado && styles.appliedButton]} 
-              onPress={() => handlePostular(item.id)}
+            <Pressable
+              style={[styles.applyButton, jornada.postulado && styles.appliedButton]}
+              onPress={() => handlePostular(jornada)}
+              disabled={jornada.postulado || jornadaEnviando !== null}
+              accessibilityRole="button"
             >
               <Text style={styles.applyButtonText}>
-                {item.postulado ? '✓ Postulado como voluntario' : 'Postularse como voluntario'}
+                {jornada.postulado
+                  ? '✓ Postulado como voluntario'
+                  : jornadaEnviando === jornada.id
+                    ? 'Guardando...'
+                    : 'Postularse como voluntario'}
               </Text>
             </Pressable>
           </View>

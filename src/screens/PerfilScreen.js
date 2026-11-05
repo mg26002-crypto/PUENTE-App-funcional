@@ -1,11 +1,14 @@
 import React from 'react';
-import { Text, View, ScrollView } from 'react-native';
+import { Text, View, ScrollView, Pressable } from 'react-native';
 import styles from '../styles/PerfilScreenStyles';
 
-export default function PerfilScreen() {
+export default function PerfilScreen({ usuario, actividades, cerrarSesion }) {
+  const historial = actividades.filter((actividad) => actividad.userId === usuario.id);
+  const donaciones = historial.filter((actividad) => actividad.tipo === 'donacion').length;
+  const postulaciones = historial.filter((actividad) => actividad.tipo === 'postulacion').length;
+
   return (
-    <ScrollView style={styles.container}>
-      {/* Encabezado Azul */}
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <View style={styles.header}>
         <Text style={styles.headerBrand}>PUENTE</Text>
         <Text style={styles.headerTitle}>Mi Impacto Social</Text>
@@ -13,89 +16,68 @@ export default function PerfilScreen() {
       </View>
 
       <View style={styles.body}>
-        {/* Tarjeta de Perfil */}
         <View style={styles.profileCard}>
-          <View style={styles.avatarContainer}>
-            <Text style={styles.avatarIcon}>👤</Text>
-          </View>
+          <View style={styles.avatarContainer}><Text style={styles.avatarIcon}>👤</Text></View>
           <View style={styles.verifiedBadge}>
-            <Text style={styles.verifiedText}>✔ PERFIL VERIFICADO</Text>
+            <Text style={styles.verifiedText}>
+              {usuario.modoDemo ? 'MODO DEMOSTRACIÓN' : 'SESIÓN ACTIVA'}
+            </Text>
           </View>
-          <Text style={styles.profileName}>Voluntario Comunitario</Text>
-          <Text style={styles.profileRole}>Voluntario / Donante Verificado</Text>
+          <Text style={styles.profileName}>{usuario.nombre}</Text>
+          <Text style={styles.profileRole}>{usuario.correo}</Text>
+          <Text style={styles.profileRole}>
+            {usuario.rol === 'administrador' ? 'Administrador' : 'Voluntariado'}
+          </Text>
 
-          {/* Estadísticas de perfil */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statVal}>7</Text>
+              <Text style={styles.statVal}>{historial.length}</Text>
               <Text style={styles.statLbl}>Actividades</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statVal}>24 h</Text>
-              <Text style={styles.statLbl}>Acumuladas</Text>
+              <Text style={styles.statVal}>{donaciones}</Text>
+              <Text style={styles.statLbl}>Donaciones</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statVal}>3</Text>
-              <Text style={styles.statLbl}>Donaciones</Text>
+              <Text style={styles.statVal}>{postulaciones}</Text>
+              <Text style={styles.statLbl}>Postulaciones</Text>
             </View>
           </View>
         </View>
 
         <Text style={styles.sectionLabel}>TU CONTRIBUCIÓN</Text>
         <Text style={styles.sectionTitle}>Historial de Impacto Social</Text>
-
-        {/* Historial Item 1 */}
-        <View style={styles.historyCard}>
-          <View style={styles.historyLeft}>
-            <View style={styles.historyCheckIcon}>
-              <Text style={styles.checkText}>✔</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.historyTitle}>Jornada de Entregas de Alimentos</Text>
-              <Text style={styles.historySub}>Completada · 20 de octubre</Text>
-            </View>
+        {historial.length === 0 ? (
+          <View style={styles.historyCard}>
+            <Text style={styles.historySub}>Aún no tienes donaciones ni postulaciones registradas.</Text>
           </View>
-          <Text style={styles.historyValue}>4 horas</Text>
-        </View>
+        ) : (
+          [...historial].reverse().map((actividad) => (
+            <View key={actividad.id} style={styles.historyCard}>
+              <View style={styles.historyLeft}>
+                <View style={actividad.tipo === 'donacion' ? styles.historyCheckIconOrange : styles.historyCheckIcon}>
+                  <Text style={actividad.tipo === 'donacion' ? styles.checkTextOrange : styles.checkText}>
+                    {actividad.tipo === 'donacion' ? '📦' : '✓'}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.historyTitle}>{actividad.titulo}</Text>
+                  <Text style={styles.historySub}>
+                    {actividad.detalle}
+                    {actividad.sincronizada === false ? ' · Guardada en este dispositivo' : ''}
+                  </Text>
+                  <Text style={styles.historySub}>{new Date(actividad.fecha).toLocaleString()}</Text>
+                </View>
+              </View>
+            </View>
+          ))
+        )}
 
-        {/* Historial Item 2 */}
-        <View style={styles.historyCard}>
-          <View style={styles.historyLeft}>
-            <View style={styles.historyCheckIcon}>
-              <Text style={styles.checkText}>✔</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.historyTitle}>Clasificación de Donaciones</Text>
-              <Text style={styles.historySub}>Completada · 12 de octubre</Text>
-            </View>
-          </View>
-          <Text style={styles.historyValue}>3 horas</Text>
-        </View>
-
-        {/* Historial Item 3 */}
-        <View style={styles.historyCard}>
-          <View style={styles.historyLeft}>
-            <View style={styles.historyCheckIconOrange}>
-              <Text style={styles.checkTextOrange}>📦</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.historyTitle}>Donación de alimentos</Text>
-              <Text style={styles.historySub}>Completada · 5 de octubre</Text>
-            </View>
-          </View>
-          <Text style={styles.historyValueOrange}>10 lbs</Text>
-        </View>
-
-        {/* Tarjeta de Insignia */}
-        <View style={styles.badgePromoCard}>
-          <Text style={styles.promoIcon}>🏆</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.promoTitle}>¡Sigue construyendo puentes!</Text>
-            <Text style={styles.promoSub}>Te faltan 6 horas para tu próxima insignia</Text>
-          </View>
-        </View>
+        <Pressable style={styles.logoutButton} onPress={cerrarSesion} accessibilityRole="button">
+          <Text style={styles.logoutText}>Cerrar sesión</Text>
+        </Pressable>
       </View>
     </ScrollView>
   );

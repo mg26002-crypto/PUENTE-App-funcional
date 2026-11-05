@@ -1,35 +1,28 @@
-import React, { useState } from 'react';
-import {
-  Text,
-  View,
-  ScrollView,
-  TextInput,
-  ActivityIndicator,
-  Pressable,
-} from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Text, View, ScrollView, TextInput, ActivityIndicator, Pressable } from 'react-native';
 import styles from '../styles/RecursosScreenStyles';
 
-export default function RecursosScreen({ centros, cargando, error }) {
+const CATEGORIAS = ['Todos', 'Alimentación', 'Albergue', 'Higiene'];
+
+export default function RecursosScreen({ centros, cargando, error, onReintentar }) {
   const [filtro, setFiltro] = useState('Todos');
   const [busqueda, setBusqueda] = useState('');
-
-  const centrosFiltrados = centros.filter(item => {
-    if (!item || typeof item !== 'object') {
-      return false;
-    }
-
-    const nombre = typeof item.nombre === 'string' ? item.nombre : '';
-    const categoria = typeof item.categoria === 'string' ? item.categoria : '';
-    const ubicacion = typeof item.ubicacion === 'string' ? item.ubicacion : '';
-    const coincideFiltro = filtro === 'Todos' || categoria.toLowerCase() === filtro.toLowerCase();
-    const textoBusqueda = busqueda.toLowerCase();
-    const coincideTexto = nombre.toLowerCase().includes(textoBusqueda) || ubicacion.toLowerCase().includes(textoBusqueda);
-    return coincideFiltro && coincideTexto;
-  });
+  const centrosFiltrados = useMemo(() => {
+    const textoBusqueda = busqueda.trim().toLowerCase();
+    return centros.filter((centro) => {
+      if (!centro || typeof centro !== 'object') return false;
+      const nombre = typeof centro.nombre === 'string' ? centro.nombre : '';
+      const categoria = typeof centro.categoria === 'string' ? centro.categoria : '';
+      const ubicacion = typeof centro.ubicacion === 'string' ? centro.ubicacion : '';
+      const coincideFiltro = filtro === 'Todos' || categoria.toLowerCase() === filtro.toLowerCase();
+      return coincideFiltro
+        && (nombre.toLowerCase().includes(textoBusqueda)
+          || ubicacion.toLowerCase().includes(textoBusqueda));
+    });
+  }, [busqueda, centros, filtro]);
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Encabezado Azul */}
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
       <View style={styles.header}>
         <Text style={styles.headerBrand}>PUENTE</Text>
         <Text style={styles.headerTitle}>Centros de Ayuda</Text>
@@ -37,27 +30,30 @@ export default function RecursosScreen({ centros, cargando, error }) {
       </View>
 
       <View style={styles.body}>
-        {/* Barra de búsqueda */}
         <View style={styles.searchBox}>
           <Text style={styles.searchIcon}>🔍</Text>
-          <TextInput 
-            placeholder="Buscar por nombre o ubicación" 
+          <TextInput
+            placeholder="Buscar por nombre o ubicación"
             placeholderTextColor="#94a3b8"
             style={styles.searchInput}
             value={busqueda}
             onChangeText={setBusqueda}
+            accessibilityLabel="Buscar centros de ayuda"
           />
         </View>
 
-        {/* Filtros horizontales */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersRow}>
-          {['Todos', 'Alimentación', 'Albergue', 'Higiene'].map(cat => (
-            <Pressable 
-              key={cat} 
-              style={[styles.filterChip, filtro === cat && styles.filterChipActive]}
-              onPress={() => setFiltro(cat)}
+          {CATEGORIAS.map((categoria) => (
+            <Pressable
+              key={categoria}
+              style={[styles.filterChip, filtro === categoria && styles.filterChipActive]}
+              onPress={() => setFiltro(categoria)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: filtro === categoria }}
             >
-              <Text style={[styles.filterText, filtro === cat && styles.filterTextActive]}>{cat}</Text>
+              <Text style={[styles.filterText, filtro === categoria && styles.filterTextActive]}>
+                {categoria}
+              </Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -73,6 +69,13 @@ export default function RecursosScreen({ centros, cargando, error }) {
           <View style={styles.stateCard}>
             <Text style={styles.stateTitle}>No se pudieron cargar los centros</Text>
             <Text style={styles.stateText}>{error}</Text>
+            <Pressable
+              style={styles.retryButton}
+              onPress={onReintentar}
+              accessibilityRole="button"
+            >
+              <Text style={styles.retryButtonText}>Reintentar</Text>
+            </Pressable>
           </View>
         ) : centrosFiltrados.length === 0 ? (
           <View style={styles.stateCard}>
@@ -98,29 +101,18 @@ export default function RecursosScreen({ centros, cargando, error }) {
               <Text style={styles.centerName}>
                 {typeof centro.nombre === 'string' ? centro.nombre : 'Centro de ayuda'}
               </Text>
-
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Ubicación</Text>
-                <Text style={styles.infoVal}>
-                  {typeof centro.ubicacion === 'string' ? centro.ubicacion : 'No disponible'}
-                </Text>
+                <Text style={styles.infoVal}>{centro.ubicacion || 'No disponible'}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Horario</Text>
-                <Text style={styles.infoVal}>
-                  {typeof centro.horario === 'string' ? centro.horario : 'No disponible'}
-                </Text>
+                <Text style={styles.infoVal}>{centro.horario || 'No disponible'}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Contacto</Text>
-                <Text style={styles.infoVal}>
-                  {typeof centro.contacto === 'string' ? centro.contacto : 'No disponible'}
-                </Text>
+                <Text style={styles.infoVal}>{centro.contacto || 'No disponible'}</Text>
               </View>
-
-              <Pressable style={styles.detailButton}>
-                <Text style={styles.detailButtonText}>Ver detalles ›</Text>
-              </Pressable>
             </View>
           ))
         )}
